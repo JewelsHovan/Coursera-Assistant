@@ -2,6 +2,7 @@ import { printLine } from './modules/print';
 import { showOverlay } from './modules/overlay';
 import { createSidebar } from './modules/sidebar';
 import { injectQuickExtractButton } from './modules/quickExtract';
+import { initBatchExtract } from './modules/batchExtract';
 
 console.log('Content script works!');
 console.log('Must reload extension for modifications to take effect.');
@@ -213,10 +214,12 @@ function initialize() {
   if (isDOMReady()) {
     createSidebar();
     injectQuickExtractButton();
+    initBatchExtract();
   } else {
     document.addEventListener('DOMContentLoaded', () => {
       createSidebar();
       injectQuickExtractButton();
+      initBatchExtract();
     });
   }
 
