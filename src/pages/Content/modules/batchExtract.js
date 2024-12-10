@@ -28,7 +28,7 @@ function createBatchExtractButton() {
     display: none; /* Hidden by default */
     align-items: center;
     width: 100%;
-    padding: 8px 16px;
+    padding: 8px 20px;
     margin: 4px 0;
     border: none;
     background: transparent;
