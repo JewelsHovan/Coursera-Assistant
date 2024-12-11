@@ -98,10 +98,12 @@
   - Error handling and data validation
   - Implementation Details:
     - Background script for storage management
-    - Daily cleanup via chrome.alarms
+    - Daily cleanup via chrome.alarms with proper error handling
     - Promise-based storage operations
     - Secure message passing between content and background
     - Automatic data expiration
+    - Robust service worker initialization
+    - Proper permission handling in manifest
 
 ### 6. Transcript Management System
 
@@ -111,12 +113,15 @@
   - Course-wide indexing capability
   - Progress tracking during indexing
   - Status updates in UI
+  - Smart handling of collapsed course sections
   - Implementation Details:
     - Modular transcript extractor
     - Shared extraction logic between batch and individual operations
     - Status feedback system
     - Error recovery and reporting
     - Course section organization
+    - Automatic section expansion/collapse during indexing
+    - Safe DOM manipulation with parent node checks
 
 ### 7. UI Improvements
 
@@ -143,6 +148,8 @@
   - Reconnection attempts
   - URL tracking
   - Navigation cache
+  - Service worker state management
+  - Background script initialization states
 
 ### Connection Management
 
@@ -151,6 +158,8 @@
   - Auto-reconnection
   - Maximum retry attempts
   - Exponential backoff
+  - Service worker registration monitoring
+  - Proper error handling for API availability
 
 ### Cache System
 
@@ -200,6 +209,9 @@
 - Clear user feedback through notifications
 - Automatic recovery attempts
 - Extension context invalidation handling
+- Service worker initialization error handling
+- DOM manipulation safety checks
+- Background script API availability checks
 
 ## Future Considerations
 
