@@ -4,8 +4,8 @@
   "version": "1.0.0",
   "description": "A smart assistant for Coursera",
   "options_page": "options.html",
-  "permissions": ["storage", "activeTab", "scripting", "tabs"],
-  "background": { "service_worker": "background.bundle.js" },
+  "permissions": ["storage", "activeTab", "scripting", "tabs", "alarms"],
+  "background": { "service_worker": "background.bundle.js", "type": "module" },
   "action": {
     "default_popup": "popup.html",
     "default_icon": "icon-34.png"
