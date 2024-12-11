@@ -1,313 +1,14 @@
-const SIDEBAR_STYLES = `
-  #coursera-helper-sidebar {
-    position: fixed;
-    right: -300px;
-    top: 0;
-    width: 300px;
-    min-width: 300px;
-    max-width: 800px;
-    height: 100vh;
-    background: white;
-    box-shadow: -2px 0 10px rgba(0,0,0,0.1);
-    transition: right 0.3s ease;
-    will-change: width, right;
-    z-index: 9998;
-    display: flex;
-    flex-direction: column;
-    font-size: clamp(14px, 1vw, 16px);
-  }
+import { indexCourse } from './courseIndexer';
+import { getStoredTranscripts } from './courseIndexer';
 
-  #coursera-helper-sidebar.open {
-    right: 0 !important;
+// Add this before createSidebar function
+export function updateSidebarStatus(message, type = 'info') {
+  const statusEl = document.querySelector('.current-transcript');
+  if (statusEl) {
+    statusEl.textContent = message;
+    statusEl.className = `current-transcript status-${type}`; // Add CSS for different status types
   }
-
-  .sidebar-toggle {
-    position: fixed;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    background: #527885;
-    color: white;
-    padding: 12px;
-    border-radius: 8px 0 0 8px;
-    cursor: pointer;
-    z-index: 9997;
-    transition: right 0.3s ease;
-  }
-
-  .sidebar-toggle.open {
-    /* Will be set dynamically in JS */
-  }
-
-  .sidebar-header {
-    padding: clamp(12px, 2vh, 20px);
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    min-height: 60px;
-  }
-
-  .sidebar-header h2 {
-    font-size: clamp(16px, 1.2vw, 20px);
-    margin: 0;
-    color: #2a2f45;
-  }
-
-  .sidebar-content {
-    padding: clamp(12px, 2vh, 24px);
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  .chat-container {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    gap: clamp(8px, 1.5vh, 16px);
-    overflow: hidden;
-  }
-
-  .chat-messages {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding: clamp(8px, 1.5vh, 16px);
-    background: #f8f9fa;
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  /* New Message Styles */
-  .message {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    max-width: 85%;
-    animation: messageAppear 0.3s ease;
-  }
-
-  .message.user {
-    align-self: flex-end;
-  }
-
-  .message-content {
-    padding: clamp(8px, 1.5vh, 12px) clamp(12px, 2vw, 16px);
-    border-radius: 12px;
-    line-height: 1.4;
-  }
-
-  .message.user .message-content {
-    background: #527885;
-    color: white;
-    border-radius: 12px 12px 2px 12px;
-  }
-
-  .message.assistant .message-content {
-    background: #e9ecef;
-    color: #2a2f45;
-    border-radius: 12px 12px 12px 2px;
-  }
-
-  .message-time {
-    font-size: 0.8em;
-    color: #666;
-    opacity: 0.8;
-  }
-
-  .chat-input-container {
-    display: flex;
-    gap: 8px;
-    padding: clamp(8px, 1.5vh, 12px) 0;
-    position: relative;
-  }
-
-  .chat-input {
-    flex-grow: 1;
-    padding: clamp(12px, 2vh, 16px);
-    padding-right: 40px;
-    border: 1px solid #ddd;
-    border-radius: 12px;
-    resize: none;
-    min-height: 44px;
-    max-height: 120px;
-    font-size: inherit;
-    line-height: 1.4;
-    transition: all 0.2s ease;
-  }
-
-  .chat-input:focus {
-    outline: none;
-    border-color: #527885;
-    box-shadow: 0 0 0 2px rgba(82, 120, 133, 0.2);
-  }
-
-  .chat-submit {
-    width: 40px;
-    height: 40px;
-    padding: 8px;
-    background: #527885;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .chat-submit:hover {
-    background: #3f5c66;
-    transform: scale(1.05);
-  }
-
-  .chat-submit:active {
-    transform: scale(0.95);
-  }
-
-  .sidebar-footer {
-    border-top: 1px solid #eee;
-    padding: clamp(12px, 2vh, 20px);
-  }
-
-  .footer-buttons {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-  }
-
-  .footer-button {
-    padding: clamp(8px, 1.5vh, 12px);
-    background: #f5f5f5;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 0.9em;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-  }
-
-  .footer-button:hover {
-    background: #e5e5e5;
-    transform: translateY(-1px);
-  }
-
-  /* Animations */
-  @keyframes messageAppear {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  /* Responsive Breakpoints */
-  @media (min-width: 400px) {
-    .footer-button {
-      font-size: 1em;
-    }
-  }
-
-  @media (min-width: 600px) {
-    .chat-messages {
-      gap: 20px;
-    }
-    
-    .message {
-      max-width: 80%;
-    }
-  }
-
-  .resize-handle {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 4px;
-    height: 100%;
-    cursor: ew-resize;
-    background: transparent;
-    transition: background 0.2s ease;
-    touch-action: none;
-    will-change: background;
-  }
-
-  .resize-handle:hover,
-  .resize-handle.active {
-    background: rgba(82, 120, 133, 0.2);
-  }
-
-  .resize-handle::after {
-    content: "";
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    height: 40px;
-    width: 2px;
-    background: #527885;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-  }
-
-  .resize-handle:hover::after,
-  .resize-handle.active::after {
-    opacity: 0.5;
-  }
-
-  .transcript-selector {
-    padding: clamp(8px, 1.5vh, 16px);
-    border-bottom: 1px solid #eee;
-    background: #f8f9fa;
-  }
-
-  .transcript-select {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-size: inherit;
-    transition: all 0.2s ease;
-  }
-
-  .transcript-select:hover {
-    border-color: #527885;
-  }
-
-  .transcript-select:focus {
-    outline: none;
-    border-color: #527885;
-    box-shadow: 0 0 0 2px rgba(82, 120, 133, 0.2);
-  }
-
-  .transcript-select option {
-    padding: 8px;
-  }
-
-  .current-transcript {
-    font-size: 12px;
-    color: #666;
-    margin-top: 4px;
-  }
-
-  /* During resize, disable transitions */
-  #coursera-helper-sidebar.resizing {
-    transition: none;
-  }
-
-  .sidebar-toggle.resizing {
-    transition: none;
-  }
-`;
+}
 
 export function createSidebar() {
   // Remove existing sidebar if it exists
@@ -316,10 +17,16 @@ export function createSidebar() {
     existingSidebar.remove();
   }
 
-  // Create styles
-  const styles = document.createElement('style');
-  styles.textContent = SIDEBAR_STYLES;
-  document.head.appendChild(styles);
+  // Instead of inline styles, inject the CSS file
+  const existingStyles = document.querySelector('#coursera-helper-styles');
+  if (!existingStyles) {
+    const link = document.createElement('link');
+    link.id = 'coursera-helper-styles';
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    link.href = chrome.runtime.getURL('content.styles.css');
+    document.head.appendChild(link);
+  }
 
   // Create toggle button
   const toggle = document.createElement('div');
@@ -340,14 +47,13 @@ export function createSidebar() {
     </div>
     <div class="transcript-selector">
       <select class="transcript-select">
-        <option value="">Loading transcripts...</option>
+        <option value="">Select a transcript...</option>
       </select>
       <div class="current-transcript"></div>
     </div>
     <div class="sidebar-content">
       <div class="chat-container">
         <div class="chat-messages">
-          <!-- Example message structure -->
           <div class="message assistant">
             <div class="message-content">
               Hello! I'm here to help you with the course content. You can ask me questions about the video or transcript.
@@ -371,8 +77,8 @@ export function createSidebar() {
     </div>
     <div class="sidebar-footer">
       <div class="footer-buttons">
-        <button class="footer-button" data-action="show-navigation">
-          🗺️ Courses
+        <button class="footer-button" data-action="index-course">
+          📚 Index Course
         </button>
         <button class="footer-button" data-action="show-settings">
           ⚙️ Settings
@@ -507,8 +213,31 @@ export function createSidebar() {
 
   // Update button handlers
   const buttonHandlers = {
-    'show-navigation': async () => {
-      console.log('Navigation clicked - will show course history');
+    'index-course': async () => {
+      try {
+        const button = sidebar.querySelector('[data-action="index-course"]');
+        button.disabled = true;
+        button.textContent = '📚 Indexing...';
+
+        await indexCourse();
+
+        // Update transcript selector after indexing
+        await updateTranscriptOptions();
+
+        button.textContent = '📚 Index Complete!';
+        setTimeout(() => {
+          button.disabled = false;
+          button.textContent = '📚 Index Course';
+        }, 2000);
+      } catch (error) {
+        console.error('Indexing failed:', error);
+        const button = sidebar.querySelector('[data-action="index-course"]');
+        button.textContent = '❌ Index Failed';
+        setTimeout(() => {
+          button.disabled = false;
+          button.textContent = '📚 Index Course';
+        }, 2000);
+      }
     },
     'show-settings': () => {
       console.log('Settings clicked');
@@ -538,55 +267,45 @@ export function createSidebar() {
   const transcriptSelect = sidebar.querySelector('.transcript-select');
   const currentTranscriptInfo = sidebar.querySelector('.current-transcript');
 
-  function updateTranscriptOptions() {
-    // Get all video elements on the page
-    const videoElements = document.querySelectorAll('video');
-    const currentUrl = window.location.href;
+  async function updateTranscriptOptions() {
+    const courseId = extractCourseId();
+    const transcripts = await getStoredTranscripts(courseId);
 
-    // Clear existing options
     transcriptSelect.innerHTML = '';
 
-    if (videoElements.length === 0) {
+    if (!transcripts || transcripts.length === 0) {
       transcriptSelect.innerHTML = `
-        <option value="">No videos found on page</option>
+        <option value="">No transcripts available - Click "Index Course"</option>
       `;
       return;
     }
 
-    // Add options for each video
-    videoElements.forEach((video, index) => {
-      // Try to get video title from nearby elements (this will need to be adjusted based on Coursera's structure)
-      const videoContainer = video.closest('[data-e2e="video-container"]');
-      const videoTitle =
-        videoContainer?.querySelector('[data-e2e="video-title"]')
-          ?.textContent || `Video ${index + 1}`;
-
+    transcripts.forEach((transcript, index) => {
       const option = document.createElement('option');
-      option.value = index;
-      option.textContent = videoTitle;
-
-      // If this is the current video, select it
-      if (
-        video
-          .closest('[data-e2e="video-container"]')
-          ?.contains(document.activeElement)
-      ) {
-        option.selected = true;
-        currentTranscriptInfo.textContent = `Current: ${videoTitle}`;
-      }
-
+      option.value = transcript.url;
+      option.textContent = `${transcript.sectionTitle} - ${transcript.title}`;
       transcriptSelect.appendChild(option);
+
+      // If this is the current video URL, select it
+      if (window.location.href === transcript.url) {
+        option.selected = true;
+        currentTranscriptInfo.textContent = `Current: ${transcript.title}`;
+      }
     });
   }
 
-  // Handle transcript selection change
-  transcriptSelect.addEventListener('change', (e) => {
-    const selectedIndex = e.target.value;
-    const selectedOption = e.target.options[selectedIndex];
-    currentTranscriptInfo.textContent = `Current: ${selectedOption.textContent}`;
+  // Update transcript selection change handler
+  transcriptSelect.addEventListener('change', async (e) => {
+    const selectedUrl = e.target.value;
+    const courseId = extractCourseId();
+    const transcripts = await getStoredTranscripts(courseId);
 
-    // TODO: Add logic to switch active transcript for chat context
-    console.log(`Selected transcript: ${selectedOption.textContent}`);
+    const selectedTranscript = transcripts.find((t) => t.url === selectedUrl);
+    if (selectedTranscript) {
+      currentTranscriptInfo.textContent = `Current: ${selectedTranscript.title}`;
+      // TODO: Update chat context with this transcript
+      console.log('Selected transcript:', selectedTranscript);
+    }
   });
 
   // Initial update
@@ -601,4 +320,10 @@ export function createSidebar() {
     toggle,
     toggleSidebar,
   };
+}
+
+// Helper function to extract course ID from URL
+function extractCourseId() {
+  const match = window.location.pathname.match(/learn\/(.+?)(\/|$)/);
+  return match ? match[1] : null;
 }

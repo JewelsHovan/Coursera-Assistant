@@ -1,25 +1,32 @@
 console.log('This is the background page.');
 console.log('Put the background scripts here.');
 
-// Message handler for background script
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  console.log('Background script received message:', request.action);
+import { CourseStorage } from './storage';
 
-  if (request.action === 'openPanel') {
-    // Open a new tab with our Newtab page
-    chrome.tabs.create(
-      {
-        url: chrome.runtime.getURL('panel.html'),
-        active: true,
-      },
-      (tab) => {
-        console.log('Opened new tab with ID:', tab.id);
-      }
-    );
+// Run cleanup periodically
+chrome.alarms.create('cleanupStorage', { periodInMinutes: 60 * 24 }); // Once per day
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === 'cleanupStorage') {
+    CourseStorage.cleanup();
+  }
+});
+
+// Handle messages from content script
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'storeTranscripts') {
+    CourseStorage.store(request.courseId, request.transcripts)
+      .then(() => sendResponse({ success: true }))
+      .catch((error) => sendResponse({ error: error.message }));
+    return true;
   }
 
-  // Always return true if you want to use sendResponse asynchronously
-  return true;
+  if (request.action === 'getTranscripts') {
+    CourseStorage.get(request.courseId)
+      .then((data) => sendResponse({ data }))
+      .catch((error) => sendResponse({ error: error.message }));
+    return true;
+  }
 });
 
 // Optional: Handle tab creation errors

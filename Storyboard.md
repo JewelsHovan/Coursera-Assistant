@@ -19,13 +19,42 @@
 - Features:
   - Toggle button on right side of screen
   - Smooth slide-in/out animations
-  - Multiple action buttons:
-    - Extract Notes
+  - Resizable sidebar width (300px - 800px)
+    - Drag handle with visual feedback
+    - Width persistence across sessions
+    - Touch device support
+    - Performance-optimized resizing
+  - Transcript selector
+    - Auto-detection of video elements
+    - Current video highlighting
+    - Dynamic updates on sidebar open
+  - Chat interface
+    - Message bubbles with animations
+    - Responsive input area
+    - Send button with hover effects
+  - Footer action buttons:
     - Course Navigation
     - Settings
     - Help
-  - Persistent across page navigation
   - Responsive design
+    - Fluid typography using clamp()
+    - Adaptive spacing
+    - Flexible layouts
+    - Mobile-friendly interactions
+  - Visual enhancements
+    - Smooth transitions
+    - Interactive hover states
+    - Consistent styling
+    - Improved contrast
+  - Performance optimizations
+    - Transition disabling during resize
+    - RequestAnimationFrame for smooth animations
+    - Will-change property usage
+    - Event listener optimization
+  - Cross-browser compatibility
+    - Touch event support
+    - Passive event listeners
+    - Cleanup on unmount
 
 ### 3. Quick Extract Button (`modules/quickExtract.js`)
 
