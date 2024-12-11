@@ -97,6 +97,7 @@
   padding: clamp(8px, 1.5vh, 12px) clamp(12px, 2vw, 16px);
   border-radius: 12px;
   line-height: 1.4;
+  white-space: pre-wrap;
 }
 
 .message.user .message-content {
@@ -317,4 +318,20 @@
 
 .status-error {
   color: #dc3545;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.message.loading .message-content {
+  animation: pulse 1.5s ease-in-out infinite;
 }

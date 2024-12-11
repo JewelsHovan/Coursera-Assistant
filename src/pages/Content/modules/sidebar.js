@@ -1,5 +1,6 @@
 import { indexCourse } from './courseIndexer';
 import { getStoredTranscripts } from './courseIndexer';
+import { ChatService } from './chatService';
 
 // Add this before createSidebar function
 export function updateSidebarStatus(message, type = 'info') {
@@ -310,6 +311,75 @@ export function createSidebar() {
 
   // Initial update
   updateTranscriptOptions();
+
+  const chatService = new ChatService();
+  const chatMessages = sidebar.querySelector('.chat-messages');
+  const chatSubmit = sidebar.querySelector('.chat-submit');
+
+  function addMessageToChat(content, isUser = false) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
+    messageDiv.innerHTML = `
+      <div class="message-content">${content}</div>
+      <div class="message-time">${new Date().toLocaleTimeString()}</div>
+    `;
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  async function handleChatSubmit() {
+    const message = chatInput.value.trim();
+    if (!message) return;
+
+    // Clear input
+    chatInput.value = '';
+    chatInput.style.height = 'auto';
+
+    // Add user message to chat
+    addMessageToChat(message, true);
+
+    // Get current transcript if available
+    const selectedTranscript = transcriptSelect.value;
+    const transcripts = await getStoredTranscripts(extractCourseId());
+    const currentTranscript = transcripts?.find(
+      (t) => t.url === selectedTranscript
+    );
+
+    try {
+      // Show loading state
+      const loadingDiv = document.createElement('div');
+      loadingDiv.className = 'message assistant';
+      loadingDiv.innerHTML = '<div class="message-content">Thinking...</div>';
+      chatMessages.appendChild(loadingDiv);
+
+      // Get response from chat service
+      const response = await chatService.sendMessage(
+        message,
+        currentTranscript?.transcript
+      );
+
+      // Remove loading message
+      loadingDiv.remove();
+
+      // Add assistant response
+      addMessageToChat(response);
+    } catch (error) {
+      console.error('Chat error:', error);
+      addMessageToChat(
+        'Sorry, I encountered an error. Please try again.',
+        false
+      );
+    }
+  }
+
+  // Add event listeners for chat
+  chatSubmit.addEventListener('click', handleChatSubmit);
+  chatInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleChatSubmit();
+    }
+  });
 
   // Append elements to DOM
   document.body.appendChild(toggle);
