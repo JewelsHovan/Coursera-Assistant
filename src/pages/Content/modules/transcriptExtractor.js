@@ -40,7 +40,9 @@ export async function extractTranscriptFromUrl(url, videoTitle) {
             transcript: 'Error extracting transcript.',
           });
         } finally {
-          document.body.removeChild(iframe);
+          if (iframe.parentNode === document.body) {
+            document.body.removeChild(iframe);
+          }
         }
       };
 

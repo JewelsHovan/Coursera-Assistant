@@ -179,10 +179,17 @@ async function downloadTranscripts(text, filename) {
   const a = document.createElement('a');
   a.href = url;
   a.download = `${filename}.md`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+
+  try {
+    document.body.appendChild(a);
+    a.click();
+  } finally {
+    // Only try to remove if it's still a child
+    if (a.parentNode === document.body) {
+      document.body.removeChild(a);
+    }
+    URL.revokeObjectURL(url);
+  }
 }
 
 function updateButtonState(button, state) {

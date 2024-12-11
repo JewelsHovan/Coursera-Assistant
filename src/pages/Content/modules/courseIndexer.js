@@ -5,7 +5,6 @@ export async function indexCourse() {
   updateSidebarStatus('Indexing course...', 'info');
 
   try {
-    // Get all course sections
     const sections = document.querySelectorAll('.rc-CollapsibleLesson');
     const courseId = extractCourseId();
 
@@ -16,36 +15,55 @@ export async function indexCourse() {
     let allTranscripts = [];
 
     for (const section of sections) {
-      const sectionTitle = section.querySelector('h2').textContent.trim();
-      const videoLinks = Array.from(
-        section.querySelectorAll('.rc-LessonItems a')
-      ).filter((link) => {
-        const itemName = link.querySelector('.rc-NavItemName');
-        return itemName && itemName.textContent.includes('Video:');
-      });
+      // Get expand button and check if section is collapsed
+      const expandButton = section.querySelector('button[aria-expanded]');
+      const wasCollapsed =
+        expandButton?.getAttribute('aria-expanded') === 'false';
 
-      const sectionTranscripts = await Promise.all(
-        videoLinks.map(async (link) => {
-          const title = link
-            .querySelector('.rc-NavItemName')
-            .textContent.replace('Video:', '')
-            .trim();
-          const transcript = await extractTranscriptFromUrl(link.href, title);
-          return {
-            sectionTitle,
-            ...transcript,
-            url: link.href,
-          };
-        })
-      );
+      // If collapsed, expand it and wait for content
+      if (wasCollapsed) {
+        expandButton.click();
+        await new Promise((r) => setTimeout(r, 1000)); // Wait for expansion animation
+      }
 
-      allTranscripts = [...allTranscripts, ...sectionTranscripts];
-      updateSidebarStatus(`Indexed ${allTranscripts.length} videos...`, 'info');
+      try {
+        const sectionTitle = section.querySelector('h2').textContent.trim();
+        const videoLinks = Array.from(
+          section.querySelectorAll('.rc-LessonItems a')
+        ).filter((link) => {
+          const itemName = link.querySelector('.rc-NavItemName');
+          return itemName && itemName.textContent.includes('Video:');
+        });
+
+        const sectionTranscripts = await Promise.all(
+          videoLinks.map(async (link) => {
+            const title = link
+              .querySelector('.rc-NavItemName')
+              .textContent.replace('Video:', '')
+              .trim();
+            const transcript = await extractTranscriptFromUrl(link.href, title);
+            return {
+              sectionTitle,
+              ...transcript,
+              url: link.href,
+            };
+          })
+        );
+
+        allTranscripts = [...allTranscripts, ...sectionTranscripts];
+        updateSidebarStatus(
+          `Indexed ${allTranscripts.length} videos...`,
+          'info'
+        );
+      } finally {
+        // Restore original collapsed state
+        if (wasCollapsed && expandButton) {
+          expandButton.click();
+        }
+      }
     }
 
-    // Store indexed transcripts
     await storeTranscripts(courseId, allTranscripts);
-
     updateSidebarStatus('Indexing complete!', 'success');
     return allTranscripts;
   } catch (error) {
@@ -76,7 +94,7 @@ async function storeTranscripts(courseId, transcripts) {
   });
 }
 
-async function getStoredTranscripts(courseId) {
+export async function getStoredTranscripts(courseId) {
   return new Promise((resolve, reject) => {
     chrome.runtime.sendMessage(
       {

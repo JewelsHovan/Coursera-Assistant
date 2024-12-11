@@ -3,6 +3,7 @@ import { showOverlay } from './modules/overlay';
 import { createSidebar } from './modules/sidebar';
 import { injectQuickExtractButton } from './modules/quickExtract';
 import { initBatchExtract } from './modules/batchExtract';
+import { getStoredTranscripts } from './modules/courseIndexer';
 
 console.log('Content script works!');
 console.log('Must reload extension for modifications to take effect.');
@@ -248,6 +249,9 @@ new MutationObserver(() => {
 window.getTranscriptText = getTranscriptText;
 window.getVideoLinks = getVideoLinks;
 window.showOverlay = showOverlay;
+
+// Make it available to the window object if needed
+window.getStoredTranscripts = getStoredTranscripts;
 
 // Start the extension
 initialize();
