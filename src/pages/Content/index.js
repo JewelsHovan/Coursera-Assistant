@@ -1,3 +1,7 @@
+/**
+ * @file This file is the entry point for the Coursera Helper extension's content script.
+ * It initializes the extension's features and handles communication with the background script.
+ */
 import { printLine } from './modules/print';
 import { showOverlay } from './modules/overlay';
 import { createSidebar } from './modules/sidebar';
@@ -10,33 +14,43 @@ console.log('Must reload extension for modifications to take effect.');
 
 printLine("Using the 'printLine' function from the Print Module");
 
-// Constants and State Management
+// Configuration constants for the extension
 const CONFIG = {
-  MAX_RECONNECT_ATTEMPTS: 5,
-  CACHE_DURATION: 3600000, // 1 hour in milliseconds
-  RETRY_DELAY: 100,
+  MAX_RECONNECT_ATTEMPTS: 5, // Maximum number of times to attempt reconnection
+  CACHE_DURATION: 3600000, // Duration to cache navigation data (1 hour in milliseconds)
+  RETRY_DELAY: 100, // Delay before retrying a failed operation (in milliseconds)
 };
 
+// State variables for the extension
 let state = {
-  isConnected: false,
-  reconnectAttempts: 0,
-  lastUrl: window.location.href,
-  navigationCache: { url: null, data: null },
+  isConnected: false, // Flag indicating if the content script is connected to the background script
+  reconnectAttempts: 0, // Number of reconnection attempts made
+  lastUrl: window.location.href, // Last recorded URL
+  navigationCache: { url: null, data: null }, // Cache for navigation data
 };
 
-// Utility Functions
+// Utility functions for logging
 const logger = {
   log: (msg, ...args) => console.log(`Content Script: ${msg}`, ...args),
   error: (msg, ...args) => console.error(`Content Script: ${msg}`, ...args),
   warn: (msg, ...args) => console.warn(`Content Script: ${msg}`, ...args),
 };
 
+/**
+ * Checks if the DOM is fully loaded and ready.
+ * @returns {boolean} True if the DOM is ready, false otherwise.
+ */
 function isDOMReady() {
   return (
     document.readyState === 'complete' || document.readyState === 'interactive'
   );
 }
 
+/**
+ * Safely calls a Chrome API function and handles potential context invalidation.
+ * @param {function} callback - The Chrome API function to call.
+ * @returns {*} The result of the API call, or null if an error occurred.
+ */
 function safeChromeApiCall(callback) {
   try {
     return callback();
@@ -49,10 +63,15 @@ function safeChromeApiCall(callback) {
   }
 }
 
-// Connection Management
+/**
+ * Sets up the connection to the background script and handles reconnection logic.
+ */
 function setupConnection() {
   logger.log('Setting up connection...');
 
+  /**
+   * Attempts to connect to the background script.
+   */
   function connect() {
     logger.log('Attempting to connect, attempts:', state.reconnectAttempts);
 
@@ -82,7 +101,10 @@ function setupConnection() {
   connect();
 }
 
-// Core Functionality
+/**
+ * Extracts the text content of the transcript from the current page.
+ * @returns {string} The extracted transcript text, or 'No transcript found.' if not found.
+ */
 function getTranscriptText() {
   const phraseElements = document.querySelectorAll('.rc-Phrase.css-13o25cb');
   if (phraseElements.length === 0) return 'No transcript found.';
@@ -92,6 +114,10 @@ function getTranscriptText() {
     .join(' ');
 }
 
+/**
+ * Retrieves the navigation links for the current course.
+ * @returns {Promise<object|null>} An object containing navigation data, or null if not found.
+ */
 async function getVideoLinks() {
   const currentUrl = window.location.href;
 
@@ -136,7 +162,9 @@ async function getVideoLinks() {
   return navigationData;
 }
 
-// Event Handlers and Message Handling
+/**
+ * Handles the extension reload event, cleaning up and reinitializing the extension.
+ */
 function handleExtensionReload() {
   logger.log('Extension context invalidated, cleaning up...');
 
@@ -155,6 +183,9 @@ function handleExtensionReload() {
   setTimeout(initialize, 1000);
 }
 
+/**
+ * Handles messages received from the background script.
+ */
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   logger.log('Received message:', request.action);
 
@@ -169,6 +200,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 
+  // Map of message actions to their corresponding handlers
   const messageHandlers = {
     extractTranscript: () => ({ transcript: getTranscriptText() }),
     getVideoLinks: async () => await getVideoLinks(),
@@ -190,14 +222,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 
+  // Execute the handler and send the response
   Promise.resolve(handler())
     .then(sendResponse)
     .catch((error) => sendResponse({ error: error.message }));
 
-  return true;
+  return true; // Indicates that sendResponse will be called asynchronously
 });
 
-// Initialization and URL Change Detection
+/**
+ * Initializes the extension, setting up the connection, UI elements, and event listeners.
+ */
 function initialize() {
   logger.log('Starting initialization...', new Date().toISOString());
 
@@ -237,6 +272,7 @@ function initialize() {
   });
 }
 
+// Observe URL changes and update the lastUrl state
 new MutationObserver(() => {
   const currentUrl = window.location.href;
   if (currentUrl !== state.lastUrl) {
@@ -245,7 +281,7 @@ new MutationObserver(() => {
   }
 }).observe(document, { subtree: true, childList: true });
 
-// Make these functions available to the sidebar
+// Make these functions available to the sidebar and other parts of the extension
 window.getTranscriptText = getTranscriptText;
 window.getVideoLinks = getVideoLinks;
 window.showOverlay = showOverlay;
