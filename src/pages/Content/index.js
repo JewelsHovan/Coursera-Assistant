@@ -106,12 +106,31 @@ function setupConnection() {
  * @returns {string} The extracted transcript text, or 'No transcript found.' if not found.
  */
 function getTranscriptText() {
-  const phraseElements = document.querySelectorAll('.rc-Phrase.css-13o25cb');
-  if (phraseElements.length === 0) return 'No transcript found.';
+  const phraseElements = document.querySelectorAll('.rc-Phrase.css-8q9a0v');
+  console.log('Found transcript phrase elements:', phraseElements.length);
 
-  return Array.from(phraseElements)
-    .map((element) => element.textContent.trim())
+  if (phraseElements.length === 0) {
+    console.log('No transcript elements found with selector .rc-Phrase.css-8q9a0v');
+    return 'No transcript found.';
+  }
+
+  // Extract text from each phrase element, looking for the inner span with css-4s48ix
+  const transcriptText = Array.from(phraseElements)
+    .map(element => {
+      const textSpans = element.querySelectorAll('.css-4s48ix');
+      return Array.from(textSpans)
+        .map(span => span.textContent.trim())
+        .join(' ');
+    })
+    .filter(text => text.length > 0)
     .join(' ');
+
+  if (!transcriptText) {
+    console.log('No text content found in transcript elements');
+    return 'No transcript found.';
+  }
+
+  return transcriptText;
 }
 
 /**

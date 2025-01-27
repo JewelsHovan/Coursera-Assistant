@@ -19,21 +19,38 @@ export async function extractTranscriptFromUrl(url, videoTitle) {
           await new Promise((r) => setTimeout(r, 2000));
 
           // Extract transcript from iframe
-          const phraseElements =
-            iframe.contentDocument.querySelectorAll('.rc-Phrase');
+          const phraseElements = iframe.contentDocument.querySelectorAll('.rc-Phrase.css-8q9a0v');
           if (phraseElements.length === 0) {
             resolve({
               title: videoTitle,
-              transcript: 'No transcript available.',
+              transcript: 'No transcript found.',
             });
             return;
           }
 
-          const transcript = Array.from(phraseElements)
-            .map((element) => element.textContent.trim())
+          // Extract text from each phrase element
+          const transcriptText = Array.from(phraseElements)
+            .map(element => {
+              const textSpans = element.querySelectorAll('.css-4s48ix');
+              return Array.from(textSpans)
+                .map(span => span.textContent.trim())
+                .join(' ');
+            })
+            .filter(text => text.length > 0)
             .join(' ');
 
-          resolve({ title: videoTitle, transcript });
+          if (!transcriptText) {
+            resolve({
+              title: videoTitle,
+              transcript: 'No transcript found.',
+            });
+            return;
+          }
+
+          resolve({
+            title: videoTitle,
+            transcript: transcriptText,
+          });
         } catch (error) {
           resolve({
             title: videoTitle,

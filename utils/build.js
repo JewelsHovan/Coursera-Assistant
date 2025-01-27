@@ -9,19 +9,29 @@ var webpack = require('webpack'),
   config = require('../webpack.config'),
   ZipPlugin = require('zip-webpack-plugin');
 
+console.log('Starting build process...');
+
 delete config.chromeExtensionBoilerplate;
 
 config.mode = 'production';
 
 var packageInfo = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
 
-config.plugins = (config.plugins || []).concat(
-  new ZipPlugin({
-    filename: `${packageInfo.name}-${packageInfo.version}.zip`,
-    path: path.join(__dirname, '../', 'zip'),
-  })
-);
+console.log('Webpack config:', config.output);
 
-webpack(config, function (err) {
-  if (err) throw err;
+webpack(config, function (err, stats) {
+  if (err) {
+    console.error('Build error:', err);
+    throw err;
+  }
+
+  console.log('Build completed!');
+  if (stats) {
+    console.log(
+      stats.toString({
+        chunks: false,
+        colors: true,
+      })
+    );
+  }
 });
